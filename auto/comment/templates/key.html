@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware ID and Software Key Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Full viewport height */
+            display: flex;
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            background-color: #f9f9f9; /* Light background color */
+        }
+        .container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+            padding: 20px;
+            background-color: #fff; /* White background for the form */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+        input[type="text"], input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generate Software Key</h1>
+        <form id="keyForm">
+            <label for="hardwareId">Enter Your Hardware ID:</label>
+            <input type="text" id="hardwareId" name="hardwareId" required>
+            <input type="submit" value="Generate Key">
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        document.getElementById('keyForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+    
+            const hardwareId = document.getElementById('hardwareId').value;
+    
+            // Make a POST request to the Django server
+            fetch('/generate-key/', {  // Ensure this matches your Django endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',  // Include CSRF token for Django
+                },
+                body: JSON.stringify({ hardwareId: hardwareId }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<p style="color:red;">${data.error}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <h2>Generated Key:</h2>
+                        <p>${data.key}</p>
+                        <p>Expiration Date: ${data.expiration_date}</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+    
+</body>
+</html>
